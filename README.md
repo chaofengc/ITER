@@ -10,30 +10,7 @@
 
 ![teaser_img](./assets/fig_teaser.jpg)
 
-<!-- <p><B>We propose a</B> $\mathcal{W}_+$ <B>adapter, a method that aligns the face latent space </B> $\mathcal{W}_+$ <B> of StyleGAN with text-to-image diffusion models, achieving high fidelity in identity preservation and semantic editing.</B></p> -->
-
-<!-- <img src="./figures/fig1.png" width="800px"> -->
-
-<!-- <p align="justify">Given a single reference image (thumbnail in the top left), our $\mathcal{W}_+$ adapter not only integrates the identity into the text-to-image generation accurately but also enables modifications of facial attributes along the $\Delta w$ trajectory derived from StyleGAN. The text prompt is ``a woman wearing a spacesuit in a forest''.  </p> -->
-
 </div>
-
-
-<!-- ## Requirements & Installation
-
-- Clone the repo and install required packages with 
-```
-# git clone this repository
-git clone https://github.com/chaofengc/TexForce.git
-cd TexForce 
-
-# create new anaconda env
-conda create -n texforce python=3.8
-source activate texforce 
-
-# install python dependencies
-pip3 install -r requirements.txt
-``` -->
 
 ## Codes and Weights
 
@@ -54,4 +31,3 @@ If you find this code useful for your research, please cite our paper:
 ## License
 
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a> and [NTU S-Lab License 1.0](./LICENCE_S-Lab).
->>>>>>> master
