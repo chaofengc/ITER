@@ -6,7 +6,7 @@
 
 <sup>1</sup>S-Lab, Nanyang Technological University, <sup>2</sup>Sensetime Research
 
-[![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/TODO) ![visitors](https://visitor-badge.laobi.icu/badge?page_id=chaofengc/ITER)
+[![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/TODO) ![arXiv](https://img.shields.io/badge/AAAI-2024-red.svg) ![visitors](https://visitor-badge.laobi.icu/badge?page_id=chaofengc/ITER)
 
 ![teaser_img](./assets/fig_teaser.jpg)
 
