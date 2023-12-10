@@ -3,7 +3,6 @@
 ## [Iterative Token Evaluation and Refinement for Real-World Super-Resolution](https://arxiv.org/abs/TODO)
 
 [<sup>1</sup>Chaofeng Chen](https://chaofengc.github.io), [<sup>1</sup>Shangchen Zhou](https://shangchenzhou.com/), [<sup>1</sup>Liang Liao](https://liaoliang92.github.io/homepage/), [<sup>1</sup>Haoning Wu](https://teowu.github.io/), [<sup>2</sup>Wenxiu Sun](https://scholar.google.com/citations?user=X9lE6O4AAAAJ&hl=en), [<sup>2</sup>Qiong Yan](https://scholar.google.com/citations?user=uT9CtPYAAAAJ&hl=en), [<sup>1</sup>Weisi Lin](https://personal.ntu.edu.sg/wslin/Home.html)
-
 <sup>1</sup>S-Lab, Nanyang Technological University, <sup>2</sup>Sensetime Research
 
 [![arXiv](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/TODO) ![arXiv](https://img.shields.io/badge/AAAI-2024-red.svg) ![visitors](https://visitor-badge.laobi.icu/badge?page_id=chaofengc/ITER)
