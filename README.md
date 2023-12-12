@@ -14,7 +14,8 @@
 
 -----------------------------
 
-![framework_img](./assets/fig_framework.jpg)
+![framework_img](assets/fig_framework.jpg)
+
 Pipeline of ITER. The input $I_l$ first passes through a distortion removal network $E_l$ to obtain the initially restored tokens $S_l$, which are composed of indexes of the quantized features in the codebook of VQGAN. Then, a reverse discrete diffusion process, conditioned on $S_l$, is used to generate textures. The process starts from completely masked tokens $S_T$. The refinement network (also called the de-masking network) $\phi_r$ generates refined outputs $S_{T-1}$ with $S_l$ as a condition. Then, $\phi_e$ evaluates $S_{T-1}$ to obtain the evaluation mask $m_{T-1}$, which determines the tokens to keep and refine for step $T-1$ through a masked sampling process. Repeat this process $T$ times to obtain de-masked outputs $S_0$, and then reconstruct the restored images $I_{sr}$ using the VQGAN decoder $D_H$. We found that $T=8$ is enough to get good results with ITER, which is much more efficient than other diffusion-based approaches.
 
 ## Codes and Weights
