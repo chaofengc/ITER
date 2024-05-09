@@ -1,0 +1,160 @@
+# general settings
+name: 021_ITER_HQ_stage
+name: debug_ITER
+scale: &upscale 1
+bsz: &bsz 2
+
+model_type: SwinVQGANModel 
+num_gpu: 1 # set num_gpu: 0 for cpu mode
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: General_Image_Train
+    type: PairedImageDataset  
+    dataroot_gt: ../datasets/HQ_sub_samename
+    dataroot_lq: ../datasets/HQ_sub_samename
+    io_backend:
+      type: disk
+ 
+    gt_size: 512 
+    scale: *upscale
+    use_resize_crop: false 
+    use_flip: true
+    use_rot: true
+
+    # data loader
+    use_shuffle: true
+    batch_size_per_gpu: *bsz 
+    num_worker_per_gpu: *bsz 
+    dataset_enlarge_ratio: 1
+
+    prefetch_mode: cpu
+    num_prefetch_queue: 128 
+
+  val:
+    name: General_Image_Valid
+    type: PairedImageDataset
+    dataroot_gt: ../datasets/test_datasets/div2k_valid/gt_mod16
+    dataroot_lq: ../datasets/test_datasets/div2k_valid/gt_mod16
+    max_num: 10
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: VQModel 
+  n_embed: 512 
+  embed_dim: 128 
+  ddconfig:
+    in_channels: 3
+    emb_dim: 128 
+    resolution: [256, 256]
+    nf: 128
+    ch_mult: [1, 2, 2, 4]
+
+    global_blks: 'swin'
+    swin_dim: 256
+    swin_window: 8
+    swin_blk_depth: 6
+    swin_blk_num: 1
+
+network_d:
+  type: UNetDiscriminatorSN 
+  num_in_ch: 3
+  # type: VQGANDiscriminator
+  # nc: 3
+  # ndf: 128
+
+# path
+path:
+  # pretrain_network_g: ./tmp_model_release/ITER_swinvqgan.pth
+  pretrain_network_g: ./experiments/020_ITER_HQ_stage/models/net_g_latest.pth
+  strict_load: false 
+  # resume_state: ~
+
+# training settings
+train:
+  gradient_accumulation_steps: 8
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    # weight_decay: !!float 1e-5
+    # eps: !!float 5e-5
+    betas: [0.9, 0.99]
+
+  optim_d:
+    type: AdamW
+    lr: !!float 4e-4
+    # weight_decay: !!float 1e-5
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [50000, 100000, 150000, 200000, 250000, 300000, 350000]
+    gamma: 1 
+
+  total_iter: 2000000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0 
+    reduction: mean
+
+  perceptual_opt:
+    type: LPIPSLoss 
+    loss_weight: !!float 1.0 
+  
+  struct_opt:
+    type: 'ssimc'
+    loss_weight: !!float 1.0 
+  
+  gan_opt:
+    type: GANLoss
+    gan_type: hinge
+    real_label_val: 1.0
+    fake_label_val: 0.0
+    loss_weight: 0.1
+
+  codebook_opt:
+    loss_weight: 1.0
+  
+  net_d_iters: 1
+  net_d_init_iters: !!float 0 
+
+# validation settings·
+val:
+  val_freq: !!float 2e3 
+  save_img: true 
+
+  key_metric: lpips
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: psnr 
+      crop_border: 4
+      test_y_channel: true
+    ssim:
+      type: ssim 
+      crop_border: 4
+      test_y_channel: true
+    lpips:
+      type: lpips 
+      better: lower
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e9
+  save_latest_freq: !!float 5e2
+  show_tf_imgs_freq: !!float 1e3
+  use_tb_logger: true
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 16500 #29500
+
+find_unused_parameters: true

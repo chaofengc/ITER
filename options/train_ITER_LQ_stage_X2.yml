@@ -1,0 +1,169 @@
+# general settings
+# name: 185_x4_ITER_LQ_stage
+name: 023_x2_ITER_LQ_stage
+# name: debug_ITER
+scale: &upscale 2
+bsz: &bsz 4
+
+model_type: ITERModel 
+num_gpu: 1 # set num_gpu: 0 for cpu mode
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: General_Image_Train
+    type: PairedImageDataset  
+    dataroot_gt: ../datasets/HQ_sub_samename
+    dataroot_lq: ../datasets/LQ_sub_samename_X2
+    io_backend:
+      type: disk
+ 
+    gt_size: 320 
+    scale: *upscale
+    use_resize_crop: true
+    use_flip: true
+    use_rot: true
+
+    # data loader
+    use_shuffle: true
+    batch_size_per_gpu: *bsz 
+    num_worker_per_gpu: 2 
+    dataset_enlarge_ratio: 1
+
+    prefetch_mode: cpu
+    num_prefetch_queue: 128 
+
+  val:
+    name: General_Image_Valid
+    type: PairedImageDataset
+    dataroot_gt: ../datasets/test_datasets/div2k_valid/gt_mod16
+    dataroot_lq: ../datasets/test_datasets/div2k_valid/lrx2
+    max_num: 10
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: ITER 
+  gt_resolution: 256
+  norm_type: 'gn'
+  act_type: 'silu'
+  scale_factor: *upscale
+  codebook_params: # has to order from low to high
+    - [32, 1024, 512]
+
+  LQ_stage: true
+  LQ_train_phase: refine 
+
+  vqgan_opt:
+    ckpt_path: ./experiments/021_ITER_HQ_stage/models/net_g_best_.pth 
+    n_embed: 512 
+    embed_dim: 128 
+    ddconfig:
+      in_channels: 3
+      emb_dim: 128 
+      resolution: [256, 256]
+      nf: 128
+
+      global_blks: 'swin'
+      swin_dim: 256
+      swin_window: 8
+      swin_blk_depth: 6
+      swin_blk_num: 1
+      ch_mult: [1, 2, 2, 4]
+
+network_d:
+  type: UNetDiscriminatorSN 
+  num_in_ch: 3
+
+# path
+path:
+  pretrain_network_hq: ./experiments/022_x2_ITER_LQ_stage/models/net_g_best_.pth 
+  pretrain_network_g: ./experiments/022_x2_ITER_LQ_stage/models/net_g_best_.pth 
+
+  strict_load: false 
+  # rtest_real_datasets_mod16/RealSRSet/lrx4/
+
+# training settings
+train:
+  gradient_accumulation_steps: 4
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  optim_d:
+    type: Adam
+    lr: !!float 4e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    # milestones: [50000, 100000, 200000, 300000]
+    # gamma: 1
+    milestones: [50000, 100000, 150000, 200000, 250000, 300000, 350000]
+    gamma: 1 
+
+  total_iter: !!float 1e9
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0 
+    reduction: mean
+
+  perceptual_opt:
+    type: LPIPSLoss 
+    loss_weight: !!float 1.0 
+  
+  gan_opt:
+    type: GANLoss
+    gan_type: hinge
+    real_label_val: 1.0
+    fake_label_val: 0.0
+    loss_weight: 0.1
+
+  codebook_opt:
+    loss_weight: 1.0
+  
+  net_d_iters: 1
+  # net_d_init_iters: !!float 0 
+  net_d_init_iters: !!float 1e9 
+
+# validation settings·
+val:
+  val_freq: !!float 2e3 
+  save_img: true 
+
+  key_metric: lpips
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: psnr 
+      crop_border: 4
+      test_y_channel: true
+    ssim:
+      type: ssim 
+      crop_border: 4
+      test_y_channel: true
+    lpips:
+      type: lpips 
+      better: lower
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e9
+  save_latest_freq: !!float 5e2
+  show_tf_imgs_freq: !!float 1e3
+  use_tb_logger: true
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 16500 #29500
+
+find_unused_parameters: true
