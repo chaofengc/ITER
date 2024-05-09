@@ -4,7 +4,6 @@ from tqdm import tqdm
 
 import torch
 import torchvision.utils as tvu
-import torch.nn.functional as F
 
 from basicsr.archs import build_network
 from basicsr.losses import build_loss
@@ -14,10 +13,7 @@ from .base_model import BaseModel
 import copy
 
 import pyiqa
-import numpy as np
 import gc
-
-from torch.cuda.amp import autocast, GradScaler
 
 
 @MODEL_REGISTRY.register()
@@ -119,8 +115,6 @@ class ITERModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
-        self.scaler = GradScaler()
-    
     def setup_optimizers(self):
         train_opt = self.opt['train']
         optim_params = []

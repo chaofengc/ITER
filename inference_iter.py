@@ -15,8 +15,8 @@ from pyiqa import create_metric
 
 
 pretrain_model_url = {
-    'x2': 'https://github.com/chaofengc/ITER/releases/download/v0.1.0/ITER_mild.pth',
-    'x4': 'https://github.com/chaofengc/ITER/releases/download/v0.1.0/ITER_severe.pth',
+    'x2': 'https://github.com/chaofengc/ITER/releases/download/v0.1.0/ITER_x2.pth',
+    'x4': 'https://github.com/chaofengc/ITER/releases/download/v0.1.0/ITER_x4.pth',
     'swinvqgan': 'https://github.com/chaofengc/ITER/releases/download/v0.1.0/ITER_swinvqgan.pth',
 }
 
@@ -43,6 +43,7 @@ def main():
         swinvqgan_path = load_file_from_url(pretrain_model_url['swinvqgan'])
     else:
         swinvqgan_path = args.weight_hq
+
     model_opts = {
         'scale_factor': args.out_scale, 
         'LQ_stage': True, 
@@ -77,6 +78,7 @@ def main():
     sr_model.eval()
     sr_model.set_sample_params(*[8, 1.0, 1.0, 0.5, 'linear'])
 
+    args.output = f'{args.output}_x{args.out_scale}'
     os.makedirs(args.output, exist_ok=True)
     if os.path.isfile(args.input):
         paths = [args.input]

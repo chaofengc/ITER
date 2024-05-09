@@ -14,10 +14,10 @@ from .demask_arch import TransformerModel
 
 from einops import rearrange
 
-from torchvision.utils import save_image
-
 
 def safe_interpolate(x, *args, **kwargs):
+    """Use fp32 for interpolation, might be useful when using mixed precision training.
+    """
     return F.interpolate(x.float(), *args, **kwargs).to(x)
 
 
@@ -84,10 +84,6 @@ class TokenRefine(nn.Module):
             mask_out = mask_out + prev_mask 
         
         return mask_out
-
-        # topk = torch.topk(mask_prob.reshape(b, h * w), k, dim=-1)[0]
-        # mask = mask_prob >= topk[:, -1].reshape(b, 1, 1, 1)
-        # return mask.float()
     
     @torch.no_grad() 
     def sample_k(self, sample_rate, gt_mask_wosample):
@@ -100,35 +96,6 @@ class TokenRefine(nn.Module):
         return mask.to(gt_mask_wosample).float()
     
     @torch.no_grad() 
-    def sample_topk(self, token_logits, k, prev_mask=None, temp=0.0):
-        k = max(1, k)
-        b, c, h, w = token_logits.shape
-        token_logits = token_logits.float().softmax(dim=1)
-
-        # token_logits = torch.log(token_logits) + temp * torch.distributions.gumbel.Gumbel(0, 1).sample(token_logits.shape).to("cuda")
-        # mask_prob = token_logits[:, [1]]
-
-        mask_prob = token_logits.max(dim=1, keepdim=True)[0]
-
-        # only sample from the left masked region
-        if prev_mask is not None:
-            # mask_prob = mask_prob + prev_mask * 1000
-
-            mask_prob = mask_prob * (1 - prev_mask)
-            k = k - prev_mask.flatten(1).sum(dim=-1)[0].item()
-            k = max(1, k)
-
-        # mask_prob = mask_prob.reshape(b, h * w)
-
-        topk = torch.topk(mask_prob.reshape(b, h * w), int(k), dim=-1)[0]
-        mask = mask_prob >= topk[:, -1].reshape(b, 1, 1, 1)
-
-        if prev_mask is not None:
-            mask = mask.reshape(b, 1, h, w) + prev_mask.reshape(b, 1, h, w)
-
-        return mask.float()
-    
-    @torch.no_grad() 
     def matrix_onehot(self, x, num_classes):
         x = F.one_hot(x[:, 0].long(), num_classes)
         return x.permute(0, 3, 1, 2).contiguous().float()
@@ -137,7 +104,6 @@ class TokenRefine(nn.Module):
     def sample_categorial(self, token_logits, temp=1.0):
         b, c, h, w = token_logits.shape
         token_logits = token_logits.float() / temp
-        # token = torch.multinomial(token_logits.permute(0, 2, 3, 1).flatten(0, 2).softmax(dim=-1), 1) 
         token = torch.distributions.categorical.Categorical(logits=token_logits.permute(0, 2, 3, 1).flatten(0, 2)).sample()
         token = self.matrix_onehot(token.reshape(b, 1, h, w), self.n_e)
         return token
@@ -162,7 +128,6 @@ class TokenRefine(nn.Module):
         init_mask = token_mask
 
         if not self.training and self.use_adaptive_inference:
-            # mask = self.token_crit_net(token)
             mask = self.token_crit_net([token, init_onehot_token])
             init_mask_binary = mask.argmax(dim=1, keepdim=True).float()
             tmp_mask = mask.float().softmax(dim=1)[:, [1]]
@@ -201,8 +166,6 @@ class TokenRefine(nn.Module):
                 if log_img:
                     self.eval_refine_masks.append(mask)
 
-            # tokens = [torch.cat([init_onehot_token, torch.zeros_like(mask)], dim=1), torch.cat([sampled_token * mask, 1 - mask], dim=1)]
-            # tokens = [torch.cat([init_onehot_token, mask], dim=1), torch.cat([sampled_token * mask, 1 - mask], dim=1)]
             tokens = [torch.cat([init_onehot_token, 1 - init_mask], dim=1), torch.cat([sampled_token * mask, 1 - mask], dim=1)]
 
             token_logits = self.token_refine_net(tokens)
@@ -232,13 +195,6 @@ class TokenRefine(nn.Module):
         else:
             raise NotImplementedError
         
-    def dist_to_token(self, x, onehot=False):
-        class_num = x.shape[-1]
-        x = x.argmin(dim=-1)
-        if onehot:
-            x = F.one_hot(x, class_num)
-        return x 
-
     def forward(self, init_token, gt_indices=None, features_text=None):
         init_token = self.matrix_onehot(init_token, self.n_e) 
         b, c, h, w = init_token.shape
@@ -247,7 +203,6 @@ class TokenRefine(nn.Module):
         codebook_loss = 0
         self.ret_masks = []
         self.eval_refine_masks = []
-
         # if train, sampling prediction tokens 
         if self.training:
             # show initial token mask 
@@ -256,16 +211,13 @@ class TokenRefine(nn.Module):
             
             init_pred_mask_logits = self.token_crit_net([init_token, init_token_org])
             codebook_loss += class_balanced_xentropy(init_pred_mask_logits.permute(0, 2, 3, 1).flatten(0, 2), gt_mask_wosample.flatten().long()) 
-            # codebook_loss += F.cross_entropy(init_pred_mask_logits.permute(0, 2, 3, 1).flatten(0, 2), gt_mask_wosample.flatten().long()) 
 
             init_pred_mask = init_pred_mask_logits.argmax(dim=1, keepdim=True)
             self.ret_masks.append(init_pred_mask)
             self.ret_masks.append(gt_mask_wosample)
 
             with torch.no_grad():
-                # sample_rate = self.gamma_func(torch.rand(gt_indices.shape[0]), 'cosine')
                 sample_rate = self.gamma_func(torch.rand(gt_indices.shape[0]), 'cosine')
-                # sample_rate = torch.min(sample_rate + 0.2, torch.ones_like(sample_rate)) # masking at least 0.1 percent
                 gt_onehot = F.one_hot(gt_indices[:, 0], self.n_embed).permute(0, 3, 1, 2).contiguous()
                 sample_mask = self.sample_k(sample_rate, torch.zeros_like(gt_mask_wosample))
                 sampled_token = gt_onehot * (1 - sample_mask)
@@ -290,7 +242,6 @@ class TokenRefine(nn.Module):
 
             pred_mask_logits = pred_mask_logits.float()
             mask_loss = F.cross_entropy(pred_mask_logits.permute(0, 2, 3, 1).flatten(0, 2), gt_mask.flatten().long())
-            # mask_loss = class_balanced_xentropy(pred_mask_logits.permute(0, 2, 3, 1).flatten(0, 2), gt_mask.flatten().long())
             codebook_loss += mask_loss
 
             # refined token loss
@@ -299,7 +250,6 @@ class TokenRefine(nn.Module):
             refine_token_loss = F.cross_entropy(refined_logits.permute(0, 2, 3, 1).contiguous().flatten(0, 2), gt_indices.flatten(), reduction='none')
             refine_token_loss = refine_token_loss.reshape(b, -1)
             refine_token_loss = (refine_token_loss * weight).mean()
-            # refine_token_loss = refine_token_loss.mean()
 
             codebook_loss += refine_token_loss
             refined_token = refined_logits.argmax(dim=1, keepdim=True)
@@ -384,8 +334,6 @@ class ITER(nn.Module):
             feat_dim = vqgan_opt['embed_dim']
             self.lq_encoder = LQEncoder(3, feat_dim, codebook_emb_num, int(np.log2(8/scale_factor)))
 
-            self.fusion = False 
-            
     def set_sample_params(self, T, temp_token, temp_mask, init_mask_threshold, gamma_type='cosine'):
         self.token_refine_net.T = T
         self.token_refine_net.temp_token = temp_token
@@ -404,30 +352,14 @@ class ITER(nn.Module):
         total_loss = 0
 
         # lq images to token 
-        # lq_input = safe_interpolate(input, scale_factor=self.scale_factor, mode='bicubic')
-
-        # with torch.no_grad():
-        #     lq_feat = self.vqgan.encode_to_prequant(lq_input)
-        
-        # lq_token_logits = self.lq_encoder(lq_feat)
-
         lq_token_logits = self.lq_encoder(input)
-
         lq_tokens = lq_token_logits.argmax(dim=1, keepdim=True)
 
-        # out_img = self.vqgan.decode_indices(lq_tokens.long())
-        # return out_img, None, None
-
         if self.training:
-            # with torch.no_grad():
-            #     out_img = self.vqgan.decode_indices(lq_tokens)
+            # pixel level backpropagation for better token prediction
             lq_tokens_train = F.gumbel_softmax(lq_token_logits.float(), dim=1, tau=1, hard=True)
             out_img = self.vqgan.decode_onehot(lq_tokens_train.long())
 
-            # out_img = self.vqgan.decode(lq_feat)
-
-            # out_img = self.vqgan.decode_soft(torch.softmax(lq_token_logits, dim=1))
-            
             if gt_indices is not None:
                 # token classification loss
                 lq_token_logits = rearrange(lq_token_logits.float(), 'b c h w -> (b h w) c')
@@ -446,10 +378,7 @@ class ITER(nn.Module):
             if self.training:
                 refined_logits, refine_loss, ret_masks = self.token_refine_net(lq_tokens, gt_indices)
 
-                # refine_token_loss = F.cross_entropy(refined_logits.permute(0, 2, 3, 1).contiguous().flatten(0, 2), self.vqgan.get_softlabel(gt_indices))
-                # total_loss += refine_token_loss
-
-                # with torch.no_grad():
+                # pixel level backpropagation for better token prediction
                 refined_token = F.gumbel_softmax(refined_logits.float(), dim=1, tau=1, hard=True)
                 refined_img = self.vqgan.decode_onehot(refined_token)
             else:
@@ -565,10 +494,6 @@ class ITER(nn.Module):
     
     @torch.no_grad()
     def test_iterative(self, input):
-        # reconstruct input
-        # input = F.interpolate(input, scale_factor=self.scale_factor, mode='bicubic')
-        # rec_out_img, _, indices = self.vqgan(input, True) 
-
         # padding to multiple of window_size * 8
         input_org = input
         wsz = 8 // self.scale_factor * 8 

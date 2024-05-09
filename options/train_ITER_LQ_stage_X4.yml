@@ -56,7 +56,7 @@ network_g:
   LQ_train_phase: refine 
 
   vqgan_opt:
-    ckpt_path: ./experiments/021_ITER_HQ_stage/models/net_g_best_.pth 
+    ckpt_path: ./tmp_model_release/ITER_swinvqgan.pth
     n_embed: 512 
     embed_dim: 128 
     ddconfig:
@@ -78,11 +78,10 @@ network_d:
 
 # path
 path:
-  pretrain_network_hq: ./experiments/021_ITER_HQ_stage/models/net_g_best_.pth 
+  pretrain_network_hq: ./tmp_model_release/ITER_swinvqgan.pth
   pretrain_network_g: ~
 
   strict_load: false 
-  # rtest_real_datasets_mod16/RealSRSet/lrx4/
 
 # training settings
 train:
@@ -106,7 +105,7 @@ train:
     milestones: [50000, 100000, 150000, 200000, 250000, 300000, 350000]
     gamma: 1 
 
-  total_iter: !!float 1e9
+  total_iter: 1600000  # should be 400k * gradient accumulation step
   warmup_iter: -1  # no warm up
 
   # losses

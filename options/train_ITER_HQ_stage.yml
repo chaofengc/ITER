@@ -1,8 +1,8 @@
 # general settings
-name: 021_ITER_HQ_stage
-name: debug_ITER
+name: 001_ITER_HQ_stage
+# name: debug_ITER
 scale: &upscale 1
-bsz: &bsz 2
+bsz: &bsz 4
 
 model_type: SwinVQGANModel 
 num_gpu: 1 # set num_gpu: 0 for cpu mode
@@ -18,7 +18,7 @@ datasets:
     io_backend:
       type: disk
  
-    gt_size: 512 
+    gt_size: 320 
     scale: *upscale
     use_resize_crop: false 
     use_flip: true
@@ -26,8 +26,8 @@ datasets:
 
     # data loader
     use_shuffle: true
-    batch_size_per_gpu: *bsz 
-    num_worker_per_gpu: *bsz 
+    batch_size_per_gpu: *bsz
+    num_worker_per_gpu: 4
     dataset_enlarge_ratio: 1
 
     prefetch_mode: cpu
@@ -63,31 +63,24 @@ network_g:
 network_d:
   type: UNetDiscriminatorSN 
   num_in_ch: 3
-  # type: VQGANDiscriminator
-  # nc: 3
-  # ndf: 128
 
 # path
 path:
-  # pretrain_network_g: ./tmp_model_release/ITER_swinvqgan.pth
-  pretrain_network_g: ./experiments/020_ITER_HQ_stage/models/net_g_latest.pth
+  pretrain_network_g: ~
   strict_load: false 
   # resume_state: ~
 
 # training settings
 train:
-  gradient_accumulation_steps: 8
+  gradient_accumulation_steps: 4
   optim_g:
-    type: AdamW
+    type: Adam
     lr: !!float 1e-4
-    # weight_decay: !!float 1e-5
-    # eps: !!float 5e-5
     betas: [0.9, 0.99]
 
   optim_d:
-    type: AdamW
+    type: Adam
     lr: !!float 4e-4
-    # weight_decay: !!float 1e-5
     betas: [0.9, 0.99]
 
   scheduler:
@@ -95,7 +88,7 @@ train:
     milestones: [50000, 100000, 150000, 200000, 250000, 300000, 350000]
     gamma: 1 
 
-  total_iter: 2000000
+  total_iter: 1600000  # should be 400k * gradient accumulation step
   warmup_iter: -1  # no warm up
 
   # losses

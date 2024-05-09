@@ -3,8 +3,6 @@ from os import path as osp
 from tqdm import tqdm
 
 import torch
-import torchvision.utils as tvu
-import torch.nn.functional as F
 
 from basicsr.archs import build_network
 from basicsr.losses import build_loss
@@ -15,8 +13,6 @@ import copy
 
 import pyiqa
 import gc
-
-from torch.cuda.amp import autocast, GradScaler
 
 
 @MODEL_REGISTRY.register()
@@ -96,8 +92,6 @@ class SwinVQGANModel(BaseModel):
         self.setup_optimizers()
         self.setup_schedulers()
 
-        self.scaler = GradScaler()
-    
     def setup_optimizers(self):
         train_opt = self.opt['train']
         optim_params = []
