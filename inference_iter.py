@@ -7,7 +7,7 @@ import torch
 import gc
 import numpy as np
 
-from basicsr.utils import img2tensor, tensor2img, imwrite 
+from basicsr.utils import img2tensor, tensor2img, imwrite, set_random_seed 
 from basicsr.utils.download_util import load_file_from_url 
 
 from basicsr.archs.iter_arch import ITER 
@@ -73,10 +73,11 @@ def main():
     print(f'Loading weight from {weight_path}')
     
     # set up the model
-    sr_model = ITER(**model_opts).to(device, dtype=torch.float16)
+    sr_model = ITER(**model_opts).to(device, dtype=torch.bfloat16)
     sr_model.load_state_dict(torch.load(weight_path)['params'], strict=False)
     sr_model.eval()
     sr_model.set_sample_params(*[8, 1.0, 1.0, 0.5, 'linear'])
+    set_random_seed(123)
 
     args.output = f'{args.output}_x{args.out_scale}'
     os.makedirs(args.output, exist_ok=True)

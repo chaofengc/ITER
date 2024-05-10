@@ -11,11 +11,13 @@ from .dist_util import master_only
 def set_random_seed(seed):
     """Set random seeds."""
     random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
+    
 
 def get_time_str():
     return time.strftime('%Y%m%d_%H%M%S', time.localtime())

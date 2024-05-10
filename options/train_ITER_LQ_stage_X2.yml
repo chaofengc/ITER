@@ -80,7 +80,7 @@ network_d:
 # path
 path:
   pretrain_network_hq: ./tmp_model_release/ITER_swinvqgan.pth
-  pretrain_network_g: ~
+  pretrain_network_g: ./tmp_model_release/ITER_x2.pth
 
   strict_load: false 
   # rtest_real_datasets_mod16/RealSRSet/lrx4/
