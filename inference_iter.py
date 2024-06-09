@@ -77,6 +77,8 @@ def main():
     sr_model = ITER(**model_opts).to(device, dtype=torch.bfloat16)
     sr_model.load_state_dict(torch.load(weight_path, map_location='cpu')['params'], strict=False)
     sr_model.eval()
+    # The original alpha value is 0.5 in the paper.
+    # However, since the retrained evaluation network has higher prediction confidence, we set the default alpha vale to 0.7 for better performance
     sr_model.set_sample_params(*[8, 1.0, 1.0, args.alpha, 'linear'])
     set_random_seed(123)
 
