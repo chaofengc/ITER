@@ -55,7 +55,7 @@ The training datasets can be downloaded from [🤗hugging face](https://huggingf
 
 ### ‍🔁 Training
 
-Below are brief examples for training the model. **Please modify the corresponding configuration files to suit your needs.**
+Below are brief examples for training the model. **Please modify the corresponding configuration files to suit your needs.** *Note that the codes are re-writtend and models are retrained from scratch, so the results may be slightly different from the paper.*
 
 #### Stage I: Train the Swin-VQGAN
 
