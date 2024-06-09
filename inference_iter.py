@@ -121,7 +121,6 @@ def main():
                 output = sr_model.test_tile(img_tensor.half())
                 inter_results = None
 
-        img_name = img_name.replace('.png', '.jpg')
         output_img = tensor2img(output)
         save_path = os.path.join(args.output, f'{img_name}')
         imwrite(output_img, save_path)
