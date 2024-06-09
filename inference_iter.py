@@ -33,6 +33,7 @@ def main():
     parser.add_argument('-si', '--save_intermediate', action='store_true', help='Save intermediate results')
     parser.add_argument('--suffix', type=str, default='', help='Suffix of the restored image')
     parser.add_argument('-gt', '--gt_path', type=str, default=None, help='Directory of ground truth images')
+    parser.add_argument('--alpha', type=float, default=0.7, help='The threshold value for evaluation network')
     parser.add_argument('--max_size', type=int, default=720, help='Max image size for whole image inference, otherwise use tiled_test')
     args = parser.parse_args()
 
@@ -76,7 +77,7 @@ def main():
     sr_model = ITER(**model_opts).to(device, dtype=torch.bfloat16)
     sr_model.load_state_dict(torch.load(weight_path, map_location='cpu')['params'], strict=False)
     sr_model.eval()
-    sr_model.set_sample_params(*[8, 1.0, 1.0, 0.5, 'linear'])
+    sr_model.set_sample_params(*[8, 1.0, 1.0, args.alpha, 'linear'])
     set_random_seed(123)
 
     args.output = f'{args.output}_x{args.out_scale}'
