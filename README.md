@@ -19,7 +19,7 @@
 
 ## TODO List
 
-- [ ] Release `ITER_x4` model.
+- [x] Release `ITER_x4` model.
 - [x] Release `ITER_x2` model.
 - [x] Release training and testing codes.
 - [x] Release training datasets.
@@ -43,8 +43,8 @@ python setup.py develop
 ## ⚡Quick Inference
 
 ```
-python inference_iter.py -s 2 -i ./testset/lrx4/frog.png
-python inference_iter.py -s 4 -i ./testset/lrx4/frog.png
+python inference_iter.py -s 2 -i ./testset/lrx4/frog.jpg
+python inference_iter.py -s 4 -i ./testset/lrx4/frog.jpg
 ```
 
 ## 👨‍💻Train the model

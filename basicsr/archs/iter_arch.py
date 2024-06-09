@@ -166,6 +166,7 @@ class TokenRefine(nn.Module):
                 if log_img:
                     self.eval_refine_masks.append(mask)
 
+            # replace un-confident token with mask tokens
             tokens = [torch.cat([init_onehot_token, 1 - init_mask], dim=1), torch.cat([sampled_token * mask, 1 - mask], dim=1)]
 
             token_logits = self.token_refine_net(tokens)
