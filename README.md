@@ -17,13 +17,6 @@
 
 **Pipeline of ITER.** The input $I_l$ first passes through a distortion removal network $E_l$ to obtain the initially restored tokens $S_l$, which are composed of indexes of the quantized features in the codebook of VQGAN. Then, a reverse discrete diffusion process, conditioned on $S_l$, is used to generate textures. The process starts from completely masked tokens $S_T$. The refinement network (also called the de-masking network) $\phi_r$ generates refined outputs $S_{T-1}$ with $S_l$ as a condition. Then, $\phi_e$ evaluates $S_{T-1}$ to obtain the evaluation mask $m_{T-1}$, which determines the tokens to keep and refine for step $T-1$ through a masked sampling process. Repeat this process $T$ times to obtain de-masked outputs $S_0$, and then reconstruct the restored images $I_{sr}$ using the VQGAN decoder $D_H$. We found that $T\leq8$ is enough to get good results with ITER, which is much more efficient than other diffusion-based approaches.
 
-## TODO List
-
-- [x] Release `ITER_x4` model.
-- [x] Release `ITER_x2` model.
-- [x] Release training and testing codes.
-- [x] Release training datasets.
-
 ## 🔧 Dependencies and Installation
 
 ```
@@ -46,6 +39,17 @@ python setup.py develop
 python inference_iter.py -s 2 -i ./testset/lrx4/frog.jpg
 python inference_iter.py -s 4 -i ./testset/lrx4/frog.jpg
 ```
+
+### Example results
+
+---
+
+**Left**: [real images](./testset) **|** **Right**: [super-resolved images with scale factor 4](./example_results_x4/)
+
+<img src="testset/lrx4/frog.jpg" width="390px"/> <img src="example_results_x4/frog.jpg" width="390px"/>
+<img src="testset/lrx4/comic2.jpg" width="390px"/> <img src="example_results_x4/comic2.jpg" width="390px"/>
+<img src="testset/lrx4/dog.jpg" width="390px"/> <img src="example_results_x4/dog.jpg" width="390px"/>
+<img src="testset/lrx4/tiger.jpg" width="390px"/> <img src="example_results_x4/tiger.jpg" width="390px"/>
 
 ## 👨‍💻Train the model
 
